@@ -153,3 +153,5 @@ str(OFF)
 ##  ..$ : chr "17"
 ##  ..$ : chr [1:151] "ALFL" "AMCR" "AMGO" "AMPI" ...
 ```
+
+*This repository originates from the archived <https://github.com/ABbiodiversity/recurring> project.*

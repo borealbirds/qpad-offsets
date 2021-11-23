@@ -24,10 +24,10 @@ if (!requireNamespace("intrval"))
   install.packages("intrval")
 ```
 
-Download or clone [this GitHub repository](https://github.com/ABbiodiversity/recurring):
+Download or clone [this GitHub repository](https://github.com/borealbirds/qpad-offsets):
 
 ```bash
-git clone https://github.com/ABbiodiversity/recurring.git
+git clone https://https://github.com/borealbirds/qpad-offsets.git
 ```
 
 Then set your working directory to the `/offset` directory of the project.

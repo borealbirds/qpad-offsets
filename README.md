@@ -30,7 +30,7 @@ Download or clone [this GitHub repository](https://github.com/borealbirds/qpad-o
 git clone https://https://github.com/borealbirds/qpad-offsets.git
 ```
 
-Then set your working directory to the `/offset` directory of the project.
+Then set your working directory to the project directory (`qpad-offsets`).
 Easiest, if using RStudio, is to double click on the `offset.Rproj` file
 which will open up the project and set the working directory.
 

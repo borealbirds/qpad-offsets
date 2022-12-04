@@ -1,8 +1,11 @@
-# Bird detectability offsets using QPAD v3
+#TO DO: ADJUST COLUMN NAMES
+#TO DO: INCORPORATE SENSOR INTO PREDICTIONS
+
+# Bird detectability offsets using QPAD v4
 
 > This approach supsersedes the functionality of the QPAD package (but estimates are still stored in the package).
 
-This repository contains geospatial layers that are consistent with QPAD v3 estimates.
+This repository contains geospatial layers that are consistent with QPAD v4 estimates.
 
 ## Installation
 
@@ -47,10 +50,10 @@ library(maptools)
 library(intrval)
 library(raster)
 
-## load v3 estimates
-load_BAM_QPAD(version = 3)
-if (getBAMversion() != "3")
-  stop("This script requires BAM version 3")
+## load v4 estimates
+load_BAM_QPAD(version = 4)
+if (!getBAMversion() %in% c("3", "4"))
+  stop("This script requires BAM version 3 or version 4")
 
 ## read raster data
 rlcc <- raster("./data/lcc.tif")
@@ -76,6 +79,7 @@ The date/time and coordinate specifications will make sure that required predict
 - methods descriptors: can be single value or vector (recycled as needed)
   - `dur`: duration in minutes
   - `dis`: distance in meters
+- sensor type: currently either "PC" for human point counts or "ARU" for data that has been human-transcribed from autonomous recording units (ARUs)
 
 ```R
 ## species of interest
@@ -94,6 +98,9 @@ lat <- 53.5461 # latitude WGS84 (EPSG: 4326)
 ## and truncation distance (Inf for unlimited)
 dur <- 10 # minutes
 dis <- 100 # meters
+
+## sensor
+sensor <- "PC"
 ```
 
 ### Step 3. Organize predictors
@@ -101,7 +108,7 @@ dis <- 100 # meters
 This object can be reused for multiple species:
 
 ```R
-x <- make_x(dt, tm, lon, lat, dur, dis)
+x <- make_x(dt, tm, lon, lat, dur, dis, sensor)
 str(x)
 ##'data.frame':	1 obs. of  8 variables:
 ## $ TSSR  : num 0.0089
@@ -118,7 +125,7 @@ NOTE: CRS related warnings are due to [PROJ4 vs PROJ6](https://stackoverflow.com
 
 ### Step 4. Calculate offsets
 
-`A` is the known or estimated area of survey, `p` is availability given presence, `q` is detectability given avaibalility.
+`A` is the known or estimated area of survey, `p` is availability given presence, `q` is detectability given availability.
 
 ```R
 o <- make_off(spp, x)

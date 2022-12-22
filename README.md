@@ -6,7 +6,7 @@
 
 > This approach supsersedes the functionality of the QPAD package (but estimates are still stored in the package).
 
-This repository contains geospatial layers that are consistent with QPAD v4 estimates.
+This repository contains geospatial layers that are consistent with QPAD v4 (and v3) estimates.
 
 ## Installation
 

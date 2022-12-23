@@ -90,6 +90,7 @@ spp <- "OVEN"
 ## https://en.wikipedia.org/wiki/ISO_8601
 dt <- "2019-06-07" # ISO 8601 in YYYY-MM-DD (0-padded)
 tm <- "05:20" # ISO 8601 in hh:mm (24 hr clock, 0-padded)
+tz <- "local" # c("local", "utc"): is time local or UTC? 
 
 ## spatial coordinates
 lon <- -113.4938 # longitude WGS84 (EPSG: 4326)
@@ -109,7 +110,7 @@ sensor <- "PC"
 This object can be reused for multiple species:
 
 ```R
-x <- make_x(dt, tm, lon, lat, dur, dis, sensor)
+x <- make_x(dat, tz="local")
 str(x)
 ##'data.frame':	1 obs. of  8 variables:
 ## $ TSSR  : num 0.0089

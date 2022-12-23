@@ -48,7 +48,7 @@ make_x <- function(
     checkfun(lon, "lon", c(-164, -52))
     checkfun(lat, "lat", c(39, 69))
   }
-  checkfun(day, "day", c(0, 360))
+  checkfun(day, "day", c(0, 365))
   checkfun(hour, "hour", c(0, 24))
   checkfun(dur, "dur", c(0, Inf))
   checkfun(dis, "dis", c(0, Inf))

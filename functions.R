@@ -1,6 +1,13 @@
-make_x <- function(
-  dt, tm, lon, lat, dur, dis, ...,
-  check_xy=TRUE) {
+make_x <- function(dat, tz="local", check_xy=TRUE) {
+
+  ## get vars
+  dt <- as.character(dat$dt)
+  tm <- as.character(dat$tm)
+  lon <- as.numeric(dat$lon)
+  lat <- as.numeric(dat$lat)
+  dur <- as.numeric(dat$dur)
+  dis <- as.numeric(dat$dis)
+
   ## checking lengths
   nn <- c(dt=length(dt), tm=length(tm), lon=length(lon), lat=length(lat), dur=length(dur), dis=length(dis))
   n1 <- nn[nn == 1L]
@@ -20,18 +27,19 @@ make_x <- function(
     dur <- rep(dur, n)
   if (length(dis) == 1L)
     dis <- rep(dis, n)
-  ## types
-  lat <- as.numeric(lat)
-  lon <- as.numeric(lon)
-  dur <- as.numeric(dur)
-  dis <- as.numeric(dis)
+
   ## parse date+time into POSIXlt
-  dt <- as.character(dt)
-  tm <- as.character(tm)
-  dtm <- strptime(paste0(dt, " ", tm, ":00"),
-    format="%Y-%m-%d %H:%M:%S", tz="America/Edmonton")
+  if(tz=="local"){
+    dtm <- strptime(paste0(dt, " ", tm, ":00"),
+                    format="%Y-%m-%d %H:%M:%S", tz="America/Edmonton")
+  }
+  if(tz=="utc"){
+    dtm <- strptime(paste0(dt, " ", tm, ":00"),
+                    format="%Y-%m-%d %H:%M:%S", tz="GMT")
+  }
   day <- as.integer(dtm$yday)
   hour <- as.numeric(round(dtm$hour + dtm$min/60, 2))
+
   ## checks
   checkfun <- function(x, name="", range=c(-Inf, Inf)) {
     if (any(x[!is.na(x)] %)(% range))
@@ -100,8 +108,14 @@ make_x <- function(
 
   ## extract seedgrow value (this is rounded)
   d1 <- extract(rd1, xy)
-  ## UTC offset + 7 makes Alberta 0 (MDT offset)
-  tz <- extract(rtz, xy) + 7
+
+  ## UTC offset + 7 makes Alberta 0 (MDT offset) for local times
+  if(tz=="local"){
+    ltz <- extract(rtz, xy) + 7
+  }
+  if(tz=="utc"){
+    ltz <- 0
+  }
 
   ## transform the rest
   JDAY <- round(day / 365, 4) # 0-365
@@ -112,10 +126,17 @@ make_x <- function(
   ## sunrise time adjusted by offset
   ok_dt <- !is.na(dtm)
   dtm[is.na(dtm)] <- mean(dtm, na.rm=TRUE)
-  sr <- sunriset(cbind("X"=lon, "Y"=lat),
-    as.POSIXct(dtm, tz="America/Edmonton"),
-    direction="sunrise", POSIXct.out=FALSE) * 24
-  TSSR <- round(unname((hour - sr + tz) / 24), 4)
+  if(tz=="local"){
+    sr <- sunriset(cbind("X"=lon, "Y"=lat),
+                   as.POSIXct(dtm, tz="America/Edmonton"),
+                   direction="sunrise", POSIXct.out=FALSE) * 24
+  }
+  if(tz=="utc"){
+    sr <- sunriset(cbind("X"=lon, "Y"=lat),
+                   as.POSIXct(dtm, tz="GMT"),
+                   direction="sunrise", POSIXct.out=FALSE) * 24
+  }
+  TSSR <- round(unname((hour - sr + ltz) / 24), 4)
 
   ## days since local spring
   DSLS <- (day - d1) / 365
@@ -128,8 +149,7 @@ make_x <- function(
     LCC4=lcc4,
     TREE=TREE,
     MAXDUR=MAXDUR,
-    MAXDIS=MAXDIS,
-    ...)
+    MAXDIS=MAXDIS)
   out$TSSR[!ok_xy | !ok_dt] <- NA
   out$DSLS[!ok_xy] <- NA
   out$LCC2[!ok_xy] <- NA

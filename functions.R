@@ -1,3 +1,5 @@
+#TO DO: FINISH UPDATING MAKE_OFF() FUNCTION FOR TAG METHOD####
+
 make_x <- function(dat, tz="local", check_xy=TRUE) {
 
   ## get vars
@@ -7,9 +9,11 @@ make_x <- function(dat, tz="local", check_xy=TRUE) {
   lat <- as.numeric(dat$lat)
   dur <- as.numeric(dat$dur)
   dis <- as.numeric(dat$dis)
+  tag <- as.character(dat$tag)
 
   ## checking lengths
-  nn <- c(dt=length(dt), tm=length(tm), lon=length(lon), lat=length(lat), dur=length(dur), dis=length(dis))
+  #NOTE: NOT SURE THIS IS NECESSARY NOW THAT I"VE CHANGED IT TO A DF INPUT
+  nn <- c(dt=length(dt), tm=length(tm), lon=length(lon), lat=length(lat), dur=length(dur), dis=length(dis), tag=length(tag))
   n1 <- nn[nn == 1L]
   n2 <- nn[nn > 1L]
   if (!all(n2 == n2[1L]))
@@ -27,6 +31,8 @@ make_x <- function(dat, tz="local", check_xy=TRUE) {
     dur <- rep(dur, n)
   if (length(dis) == 1L)
     dis <- rep(dis, n)
+  if (length(tag) == 1L)
+    dis <- rep(tag, n)
 
   ## parse date+time into POSIXlt
   if(tz=="local"){
@@ -46,6 +52,7 @@ make_x <- function(dat, tz="local", check_xy=TRUE) {
       stop(sprintf("Parameter %s is out of range [%.0f, %.0f]", name, range[1], range[2]))
     invisible(NULL)
   }
+  ## Coordinates
   ## BCR 4:14 included
   ## crs: WGS84 (EPSG: 4326)
   ## "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"
@@ -56,16 +63,16 @@ make_x <- function(dat, tz="local", check_xy=TRUE) {
     checkfun(lon, "lon", c(-164, -52))
     checkfun(lat, "lat", c(39, 69))
   }
-  checkfun(day, "day", c(0, 365))
-  checkfun(hour, "hour", c(0, 24))
-  checkfun(dur, "dur", c(0, Inf))
-  checkfun(dis, "dis", c(0, Inf))
   if (any(is.infinite(lon)))
     stop("Parameter lon must be finite")
   if (any(is.infinite(lat)))
     stop("Parameter lat must be finite")
   ## handling missing values
   ok_xy <- !is.na(lon) & !is.na(lat)
+  ## Other fields
+  checkfun(day, "day", c(0, 365))
+  checkfun(hour, "hour", c(0, 24))
+  checkfun(dur, "dur", c(0, Inf))
 
   ## intersect here
   xy <- data.frame(x=lon, y=lat)
@@ -73,7 +80,7 @@ make_x <- function(dat, tz="local", check_xy=TRUE) {
   xy$y[is.na(xy$y)] <- mean(xy$y, na.rm=TRUE)
   coordinates(xy) <- ~ x + y
   proj4string(xy) <- "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"
-  xy <- spTransform(xy, crs)
+  xy <- invisible(spTransform(xy, crs))
 
   ## LCC4 and LCC2
   vlcc <- extract(rlcc, xy)
@@ -117,12 +124,6 @@ make_x <- function(dat, tz="local", check_xy=TRUE) {
     ltz <- 0
   }
 
-  ## transform the rest
-  JDAY <- round(day / 365, 4) # 0-365
-  TREE <- round(vtree / 100, 4)
-  MAXDIS <- round(dis / 100, 4)
-  MAXDUR <- round(dur, 4)
-
   ## sunrise time adjusted by offset
   ok_dt <- !is.na(dtm)
   dtm[is.na(dtm)] <- mean(dtm, na.rm=TRUE)
@@ -141,6 +142,15 @@ make_x <- function(dat, tz="local", check_xy=TRUE) {
   ## days since local spring
   DSLS <- (day - d1) / 365
 
+  ## transform the rest
+  JDAY <- round(day / 365, 4) # 0-365
+  TREE <- round(vtree / 100, 4)
+  MAXDIS <- round(dis / 100, 4)
+  MAXDUR <- round(dur, 4)
+
+  ## tagmethod
+  TAG <- ifelse(tag %in% c("PC", "1SPT", "1SPM"), tag, ifelse(tag=="ARU", "1SPT", NA))
+
   out <- data.frame(
     TSSR=TSSR,
     JDAY=JDAY,
@@ -149,20 +159,22 @@ make_x <- function(dat, tz="local", check_xy=TRUE) {
     LCC4=lcc4,
     TREE=TREE,
     MAXDUR=MAXDUR,
-    MAXDIS=MAXDIS)
+    MAXDIS=MAXDIS,
+    TAG=TAG)
   out$TSSR[!ok_xy | !ok_dt] <- NA
   out$DSLS[!ok_xy] <- NA
   out$LCC2[!ok_xy] <- NA
   out$LCC4[!ok_xy] <- NA
   out$TREE[!ok_xy] <- NA
-  out
-}
 
+  return(out)
+
+}
 
 make_off <- function(spp, x) {
 
   if (length(spp) > 1L)
-    stop("spp argument must be length 1")
+    stop("spp argument must be length 1, please loop or map for multiple species")
   spp <- as.character(spp)
   ## checks
   if (!(spp %in% getBAMspecieslist()))
@@ -170,11 +182,12 @@ make_off <- function(spp, x) {
 
   ## constant for NA cases
   cf0 <- exp(unlist(coefBAMspecies(spp, 0, 0)))
-  ## best model (includes DSLS)
-  #mi <- bestmodelBAMspecies(spp, type="BIC",
-  #    model.sra=names(getBAMmodellist()$sra)[!grepl("DSLS", getBAMmodellist()$sra)])
-  mi <- bestmodelBAMspecies(spp, type="BIC")
-  cfi <- coefBAMspecies(spp, mi$sra, mi$edr)
+  ## best model - no tag method
+  mi0 <- bestmodelBAMspecies(spp, type="BIC", tag=0)
+  cfi0 <- coefBAMspecies(spp, mi$sra, mi$edr)
+  ## best model - tag method
+  mi1 <- bestmodelBAMspecies(spp, type="BIC", tag=1)
+  cfi1 <- coefBAMspecies(spp, mi$sra, mi$edr)
 
   TSSR <- x$TSSR
   DSLS <- x$DSLS
@@ -232,6 +245,7 @@ make_off <- function(spp, x) {
     A=A,
     correction=p*A*q,
     offset=log(p) + log(A) + log(q))
+
 }
 
 

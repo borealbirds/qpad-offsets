@@ -67,70 +67,78 @@ source("functions.R")
 
 The date/time and coordinate specifications will make sure that required predictors are extracted in the way that match the estimates.
 
-- the species ID need to be a single 4-letter AOU code (see `getBAMspecieslist()` for a full list)
-- coordinates and time:  can be single values or vectors (shorter objects recycled)
+- time descriptors:
   - `dt`: date, YYYY-MM-DD (0-padded) https://en.wikipedia.org/wiki/ISO_8601
   - `tm`: time, hh:mm (24 hr clock, 0-padded) ## https://en.wikipedia.org/wiki/ISO_8601
+- coordinates:
   - `lat`: latitude [WGS84 (EPSG: 4326)]
   - `lon`: longitude [WGS84 (EPSG: 4326)]
-- methods descriptors: can be single value or vector (recycled as needed)
+- methods descriptors:
   - `dur`: duration in minutes
-  - `dis`: distance in meters
-- tagmeth: either "PC" for human point counts, "1SPT" for autonomous recording unit (ARU) data that has been human-transcribed to the first detection per individual, or "1SPM" for ARU data that has been human-transcribed to the first detection per indvidual per minute. See https://www.wildtrax.ca/home/resources/guide/acoustic-data/acoustic-tagging-methods.html for details on ARU tagging methods.
-
+  - `dis`: truncation distance in meters (Inf for unlimited)
+  - `tagmeth`: either "PC" for human point counts, "1SPT" for autonomous recording unit (ARU) data that has been human-transcribed to the first detection per individual, or "1SPM" for ARU data that has been human-transcribed to the first detection per indvidual per minute. See https://www.wildtrax.ca/home/resources/guide/acoustic-data/acoustic-tagging-methods.html for details on ARU tagging methods.
 ```R
 ## dataframe
-dat <- data.frame(date = c("2019-06-07", "2019-06-17", "2019-06-27"), # ISO 8601 in YYYY-MM-DD (0-padded)
-                  time = rep("05:20", 3), # ISO 8601 in hh:mm (24 hr clock, 0-padded)
-                  lon = rep(-115, 3),  # longitude WGS84 (EPSG: 4326)
-                  lat = rep(53, 3), # latitude WGS84 (EPSG: 4326)
-                  dur = rep(10, 3), # point count duration in minutes
-                  dist = rep(100, 3), # point count truncation distance in metres (Inf for unlimited)
-                  tagmeth = rep("PC", 3)) # survey method, either "PC" for human point counts or "1SPT" or "1SPM" for human-transcribed ARU data
-
-## timezone argument for dataframe
-tz <- "local" # Indicate whether your times are in your local time zone or UTC: c("local", "utc")
+dat <- data.frame(date = c("2019-06-07", "2019-06-17", "2019-06-27"),
+                  time = rep("05:20", 3), 
+                  lon = rep(-115, 3),
+                  lat = rep(53, 3),
+                  dur = rep(10, 3), 
+                  dist = rep(100, 3),
+                  tagmeth = rep("PC", 3)) 
 ```
 
 ### Step 3. Organize predictors
 
-This object can be reused for multiple species.
+Use the `tz` argument to indicate whether the times in your dataframe are local times or UTC.
+
+The output object can be reused for multiple species (see Step 4).
 
 ```R
-x <- make_x(dat, tz="local")
+## timezone argument
+tz <- "local"
+
+## organize predictors
+x <- make_x(dat, tz)
 str(x)
-##'data.frame':	1 obs. of  8 variables:
-## $ TSSR  : num 0.0089
-## $ JDAY  : num 0.43
-## $ DSLS  : num 0.14
-## $ LCC2  : Factor w/ 2 levels "Forest","OpenWet": 2
-## $ LCC4  : Factor w/ 4 levels "DecidMixed","Conif",..: 3
-## $ TREE  : num 2.55
-## $ MAXDUR: num 10
-## $ MAXDIS: num 1
+# 'data.frame':	3 obs. of  9 variables:
+#  $ TSSR  : num  0.0024 0.0116 0.0173
+#  $ JDAY  : num  0.43 0.458 0.485
+#  $ DSLS  : num  0.11 0.164 0.189
+#  $ LCC2  : Factor w/ 2 levels "Forest","OpenWet": 2 2 1
+#  $ LCC4  : Factor w/ 4 levels "DecidMixed","Conif",..: 3 3 1
+#  $ TREE  : num  0.3 2.55 0.73
+#  $ MAXDUR: num  10 10 10
+#  $ MAXDIS: num  1 1 1
+#  $ TM    : chr  "PC" "1SPT" "1SPM"
 ```
 
 NOTE: CRS related warnings are due to [PROJ4 vs PROJ6](https://stackoverflow.com/questions/63727886/proj4-to-proj6-upgrade-and-discarded-datum-warnings) discrepancies when using GDAL > 3 because the `+datum=` part is deprecated.
 
 ### Step 4. Calculate offsets
 
-Indicate whether you would like offsets that take method (human point count, ARU with transcription method) into account using the useMeth argument (c("y", "n")).
+Use the `spp` argument to specify the species of interest. The species ID needs to be a single 4-letter AOU code (see `getBAMspecieslist()` for a full list).
 
-`A` is the known or estimated area of survey, `p` is availability given presence, `q` is detectability given availability.
+Use the `useMeth` argument to indicate whether you would like offsets that take method (human point count, ARU with transcription method) into account: c("y", "n").
 
 ```R
 ## species of interest
 spp <- "OVEN"
 
-o <- make_off(spp, x)
+## take method into acount
+useMeth <- "y"
+
+o <- make_off(spp, x, useMeth)
 str(o)
-##'data.frame':	1 obs. of  5 variables:
-## $ p         : num 0.991
-## $ q         : num 0.562
-## $ A         : num 3.14
-## $ correction: num 1.75
-## $ offset    : num 0.559
+# 'data.frame':	3 obs. of  5 variables:
+#  $ p         : num  0.971 0.96 0.948
+#  $ q         : num  0.58 0.58 0.65
+#  $ A         : num  3.14 3.14 3.14
+#  $ correction: num  1.77 1.75 1.93
+#  $ offset    : num  0.57 0.559 0.66
 ```
+
+`A` is the known or estimated area of survey, `p` is availability given presence, `q` is detectability given availability.
 
 NOTE: `offset` is `log(correction)`, `correction` = `A*p*q`, thus `offset=log(A) + log(p) + log(q)`.
 
@@ -145,7 +153,7 @@ colnames(OFF) <- SPP
 for (spp in SPP) {
   cat(spp, "\n")
   flush.console()
-  o <- make_off(spp, x)
+  o <- make_off(spp, x, useMeth)
   OFF[,spp] <- o$offset
 }
 str(OFF)

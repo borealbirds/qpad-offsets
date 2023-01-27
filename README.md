@@ -63,46 +63,36 @@ crs <- proj4string(rtree)
 source("functions.R")
 ```
 
-### Step 2. Define variables for your project
+### Step 2. Create a dataframe of variables for your project
 
 The date/time and coordinate specifications will make sure that required predictors are extracted in the way that match the estimates.
 
 - the species ID need to be a single 4-letter AOU code (see `getBAMspecieslist()` for a full list)
 - coordinates and time:  can be single values or vectors (shorter objects recycled)
-  - `dt`: date, ISO 8601 in YYYY-MM-DD (0-padded)
-  - `tm`: time, ISO 8601 in hh:mm (24 hr clock, 0-padded)
+  - `dt`: date, YYYY-MM-DD (0-padded) https://en.wikipedia.org/wiki/ISO_8601
+  - `tm`: time, hh:mm (24 hr clock, 0-padded) ## https://en.wikipedia.org/wiki/ISO_8601
   - `lat`: latitude [WGS84 (EPSG: 4326)]
   - `lon`: longitude [WGS84 (EPSG: 4326)]
 - methods descriptors: can be single value or vector (recycled as needed)
   - `dur`: duration in minutes
   - `dis`: distance in meters
-- sensor type: either "PC" for human point counts, "1SPT" for autonomous recording unit (ARU) data that has been human-transcribed to the first detection per individual, or "1SPM" for ARU data that has been human-transcribed to the first detection per indvidual per minute. See https://www.wildtrax.ca/home/resources/guide/acoustic-data/acoustic-tagging-methods.html for details on ARU tagging methods.
+- tagmeth: either "PC" for human point counts, "1SPT" for autonomous recording unit (ARU) data that has been human-transcribed to the first detection per individual, or "1SPM" for ARU data that has been human-transcribed to the first detection per indvidual per minute. See https://www.wildtrax.ca/home/resources/guide/acoustic-data/acoustic-tagging-methods.html for details on ARU tagging methods.
 
 ```R
-## species of interest
-spp <- "OVEN"
+## dataframe
+dat <- data.frame(date = c("2019-06-07", "2019-06-17", "2019-06-27"), # ISO 8601 in YYYY-MM-DD (0-padded)
+                  time = rep("05:20", 3), # ISO 8601 in hh:mm (24 hr clock, 0-padded)
+                  lon = rep(-115, 3),  # longitude WGS84 (EPSG: 4326)
+                  lat = rep(53, 3), # latitude WGS84 (EPSG: 4326)
+                  dur = rep(10, 3), # point count duration in minutes
+                  dist = rep(100, 3), # point count truncation distance in metres (Inf for unlimited)
+                  tagmeth = rep("PC", 3)) # survey method, either "PC" for human point counts or "1SPT" or "1SPM" for human-transcribed ARU data
 
-## date and time
-## https://en.wikipedia.org/wiki/ISO_8601
-dt <- "2019-06-07" # ISO 8601 in YYYY-MM-DD (0-padded)
-tm <- "05:20" # ISO 8601 in hh:mm (24 hr clock, 0-padded)
-
-## spatial coordinates
-lon <- -113.4938 # longitude WGS84 (EPSG: 4326)
-lat <- 53.5461 # latitude WGS84 (EPSG: 4326)
-
-## point count duration 
-## and truncation distance (Inf for unlimited)
-dur <- 10 # minutes
-dis <- 100 # meters
-
-## sensor
-sensor <- "PC"
+## timezone argument for dataframe
+tz <- "local" # Indicate whether your times are in your local time zone or UTC: c("local", "utc")
 ```
 
 ### Step 3. Organize predictors
-
-Indicate whether your times are in your local time zone or UTC using the 'tz' argument (c("local", "utc")).
 
 This object can be reused for multiple species.
 
@@ -129,6 +119,9 @@ Indicate whether you would like offsets that take method (human point count, ARU
 `A` is the known or estimated area of survey, `p` is availability given presence, `q` is detectability given availability.
 
 ```R
+## species of interest
+spp <- "OVEN"
+
 o <- make_off(spp, x)
 str(o)
 ##'data.frame':	1 obs. of  5 variables:

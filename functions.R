@@ -1,28 +1,28 @@
-#TO DO: FINISH UPDATING MAKE_OFF() FUNCTION FOR TAG METHOD####
+#TO DO: FINISH UPDATING MAKE_OFF() FUNCTION FOR TM METHOD####
 
 make_x <- function(dat, tz="local", check_xy=TRUE) {
 
   ## get vars
-  dt <- as.character(dat$dt)
-  tm <- as.character(dat$tm)
+  date <- as.character(dat$date)
+  time <- as.character(dat$time)
   lon <- as.numeric(dat$lon)
   lat <- as.numeric(dat$lat)
   dur <- as.numeric(dat$dur)
   dis <- as.numeric(dat$dis)
-  tag <- as.character(dat$tag)
+  tagmeth <- as.character(dat$tagmeth)
 
   ## checking lengths
   #NOTE: NOT SURE THIS IS NECESSARY NOW THAT I"VE CHANGED IT TO A DF INPUT
-  nn <- c(dt=length(dt), tm=length(tm), lon=length(lon), lat=length(lat), dur=length(dur), dis=length(dis), tag=length(tag))
+  nn <- c(date=length(date), time=length(time), lon=length(lon), lat=length(lat), dur=length(dur), dis=length(dis), tagmeth=length(tagmeth))
   n1 <- nn[nn == 1L]
   n2 <- nn[nn > 1L]
   if (!all(n2 == n2[1L]))
     stop("input lengths must be equal or 1")
   n <- unname(if (length(n2)) n2[1L] else n1[1L])
-  if (length(dt) == 1L)
-    dt <- rep(dt, n)
-  if (length(tm) == 1L)
-    tm <- rep(tm, n)
+  if (length(date) == 1L)
+    dt <- rep(date, n)
+  if (length(time) == 1L)
+    tm <- rep(time, n)
   if (length(lon) == 1L)
     lon <- rep(lon, n)
   if (length(lat) == 1L)
@@ -31,16 +31,16 @@ make_x <- function(dat, tz="local", check_xy=TRUE) {
     dur <- rep(dur, n)
   if (length(dis) == 1L)
     dis <- rep(dis, n)
-  if (length(tag) == 1L)
-    dis <- rep(tag, n)
+  if (length(tagmeth) == 1L)
+    dis <- rep(tagmeth, n)
 
   ## parse date+time into POSIXlt
   if(tz=="local"){
-    dtm <- strptime(paste0(dt, " ", tm, ":00"),
+    dtm <- strptime(paste0(date, " ", time, ":00"),
                     format="%Y-%m-%d %H:%M:%S", tz="America/Edmonton")
   }
   if(tz=="utc"){
-    dtm <- strptime(paste0(dt, " ", tm, ":00"),
+    dtm <- strptime(paste0(date, " ", time, ":00"),
                     format="%Y-%m-%d %H:%M:%S", tz="GMT")
   }
   day <- as.integer(dtm$yday)
@@ -148,8 +148,8 @@ make_x <- function(dat, tz="local", check_xy=TRUE) {
   MAXDIS <- round(dis / 100, 4)
   MAXDUR <- round(dur, 4)
 
-  ## tagmethod
-  TAG <- ifelse(tag %in% c("PC", "1SPT", "1SPM"), tag, ifelse(tag=="ARU", "1SPT", NA))
+  ## TMmethod
+  TM <- ifelse(tagmeth %in% c("PC", "1SPT", "1SPM"), tagmeth, ifelse(tagmeth=="ARU", "1SPT", NA))
 
   out <- data.frame(
     TSSR=TSSR,
@@ -160,7 +160,7 @@ make_x <- function(dat, tz="local", check_xy=TRUE) {
     TREE=TREE,
     MAXDUR=MAXDUR,
     MAXDIS=MAXDIS,
-    TAG=TAG)
+    TM=TM)
   out$TSSR[!ok_xy | !ok_dt] <- NA
   out$DSLS[!ok_xy] <- NA
   out$LCC2[!ok_xy] <- NA
@@ -171,7 +171,7 @@ make_x <- function(dat, tz="local", check_xy=TRUE) {
 
 }
 
-make_off <- function(spp, x) {
+make_off <- function(spp, x, useMethod="y"){
 
   if (length(spp) > 1L)
     stop("spp argument must be length 1, please loop or map for multiple species")
@@ -182,12 +182,17 @@ make_off <- function(spp, x) {
 
   ## constant for NA cases
   cf0 <- exp(unlist(coefBAMspecies(spp, 0, 0)))
-  ## best model - no tag method
-  mi0 <- bestmodelBAMspecies(spp, type="BIC", tag=0)
-  cfi0 <- coefBAMspecies(spp, mi$sra, mi$edr)
-  ## best model - tag method
-  mi1 <- bestmodelBAMspecies(spp, type="BIC", tag=1)
-  cfi1 <- coefBAMspecies(spp, mi$sra, mi$edr)
+  ## best model
+  if(useMethod=="n"){
+    ### no TM method
+    mi <- bestmodelBAMspecies(spp, type="BIC", TM=0)
+    cfi <- coefBAMspecies(spp, mi$sra, mi$edr)
+  }
+  if(useMethod=="y"){
+    ### TM method
+    mi <- bestmodelBAMspecies(spp, type="BIC", TM=1)
+    cfi <- coefBAMspecies(spp, mi$sra, mi$edr)
+  }
 
   TSSR <- x$TSSR
   DSLS <- x$DSLS
@@ -195,6 +200,7 @@ make_off <- function(spp, x) {
   lcc2 <- x$LCC2
   lcc4 <- x$LCC4
   TREE <- x$TREE
+  TM <- x$TM
   MAXDUR <- x$MAXDUR
   MAXDIS <- x$MAXDIS
   n <- nrow(x)
@@ -208,7 +214,9 @@ make_off <- function(spp, x) {
     "TSSR2"=TSSR^2,
     "JDAY2"=JDAY^2,
     "DSLS"=DSLS,
-    "DSLS2"=DSLS^2)
+    "DSLS2"=DSLS^2,
+    "TM1SPT"=ifelse(TM=="TM1SPT", 1, 0),
+    "TM1SPM"=ifelse(TM=="TM1SPM", 1, 0))
   Xq <- cbind("(Intercept)"=1,
     "TREE"=TREE,
     "LCC2OpenWet"=ifelse(lcc4 %in% c("Open", "Wet"), 1, 0),

@@ -159,10 +159,10 @@ for (spp in SPP) {
   OFF[,spp] <- o$offset
 }
 str(OFF)
-##num [1, 1:151] 0.1365 0.9699 0.0643 0.5917 -0.3132 ...
-## - attr(*, "dimnames")=List of 2
-##  ..$ : chr "17"
-##  ..$ : chr [1:151] "ALFL" "AMCR" "AMGO" "AMPI" ...
+# num [1:3, 1:187] -0.0683 -0.0683 -0.0683 -0.01 -0.0111 ...
+# - attr(*, "dimnames")=List of 2
+# ..$ : chr [1:3] "1" "2" "3"
+# ..$ : chr [1:187] "ACFL" "ALFL" "AMCR" "AMGO" ...
 ```
 
 *This repository originates from the archived <https://github.com/ABbiodiversity/recurring> project.*

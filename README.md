@@ -1,7 +1,3 @@
-#TO DO: ADJUST COLUMN NAMES
-#TO DO: INCORPORATE SENSOR INTO PREDICTIONS
-#TO DO: ADJUST POLYNOMIAL ISSUE
-
 # Bird detectability offsets using QPAD v4
 
 > This approach supsersedes the functionality of the QPAD package (but estimates are still stored in the package).
@@ -80,7 +76,7 @@ The date/time and coordinate specifications will make sure that required predict
 - methods descriptors: can be single value or vector (recycled as needed)
   - `dur`: duration in minutes
   - `dis`: distance in meters
-- sensor type: currently either "PC" for human point counts or "ARU" for data that has been human-transcribed from autonomous recording units (ARUs)
+- sensor type: either "PC" for human point counts, "1SPT" for autonomous recording unit (ARU) data that has been human-transcribed to the first detection per individual, or "1SPM" for ARU data that has been human-transcribed to the first detection per indvidual per minute. See https://www.wildtrax.ca/home/resources/guide/acoustic-data/acoustic-tagging-methods.html for details on ARU tagging methods.
 
 ```R
 ## species of interest
@@ -90,7 +86,6 @@ spp <- "OVEN"
 ## https://en.wikipedia.org/wiki/ISO_8601
 dt <- "2019-06-07" # ISO 8601 in YYYY-MM-DD (0-padded)
 tm <- "05:20" # ISO 8601 in hh:mm (24 hr clock, 0-padded)
-tz <- "local" # c("local", "utc"): is time local or UTC? 
 
 ## spatial coordinates
 lon <- -113.4938 # longitude WGS84 (EPSG: 4326)
@@ -107,7 +102,9 @@ sensor <- "PC"
 
 ### Step 3. Organize predictors
 
-This object can be reused for multiple species:
+Indicate whether your times are in your local time zone or UTC using the 'tz' argument (c("local", "utc")).
+
+This object can be reused for multiple species.
 
 ```R
 x <- make_x(dat, tz="local")
@@ -126,6 +123,8 @@ str(x)
 NOTE: CRS related warnings are due to [PROJ4 vs PROJ6](https://stackoverflow.com/questions/63727886/proj4-to-proj6-upgrade-and-discarded-datum-warnings) discrepancies when using GDAL > 3 because the `+datum=` part is deprecated.
 
 ### Step 4. Calculate offsets
+
+Indicate whether you would like offsets that take method (human point count, ARU with transcription method) into account using the useMeth argument (c("y", "n")).
 
 `A` is the known or estimated area of survey, `p` is availability given presence, `q` is detectability given availability.
 

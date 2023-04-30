@@ -12,7 +12,7 @@ Install R then get the R dependencies:
 if (!requireNamespace("QPAD")) {
   if (!requireNamespace("remotes"))
     install.packages("remotes")
-  remotes::install_github("psolymos/QPAD")
+  remotes::install_github("borealbirds/QPAD")
 }
 if (!requireNamespace("sp"))
   install.packages("sp")

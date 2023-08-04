@@ -68,7 +68,7 @@ make_x <- function(
   xy <- spTransform(xy, crs)
 
   ## LCC4 and LCC2
-  vlcc <- extract(rlcc, xy)
+  vlcc <- raster::extract(rlcc, xy)
   # 0: No data (NA/NA)
   # 1: Temperate or sub-polar needleleaf forest (Conif/Forest)
   # 2: Sub-polar taiga needleleaf forest (Conif/Forest)
@@ -94,14 +94,14 @@ make_x <- function(
   levels(lcc2) <- c("Forest", "Forest", "OpenWet", "OpenWet")
 
   ## TREE
-  vtree <- extract(rtree, xy)
+  vtree <- raster::extract(rtree, xy)
   TREE <- vtree / 100
   TREE[TREE %)(% c(0, 1)] <- 0
 
   ## extract seedgrow value (this is rounded)
-  d1 <- extract(rd1, xy)
+  d1 <- raster::extract(rd1, xy)
   ## UTC offset + 7 makes Alberta 0 (MDT offset)
-  tz <- extract(rtz, xy) + 7
+  tz <- raster::extract(rtz, xy) + 7
 
   ## transform the rest
   JDAY <- round(day / 365, 4) # 0-365

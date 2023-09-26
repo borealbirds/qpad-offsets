@@ -43,9 +43,9 @@ which will open up the project and set the working directory.
 ```R
 ## load packages
 library(QPAD)
-library(maptools)
+library(suntools)
 library(intrval)
-library(raster)
+library(terra)
 
 ## load v3 estimates
 load_BAM_QPAD(version = 3)
@@ -53,11 +53,11 @@ if (getBAMversion() != "3")
   stop("This script requires BAM version 3")
 
 ## read raster data
-rlcc <- raster("./data/lcc.tif")
-rtree <- raster("./data/tree.tif")
-rtz <- raster("./data/utcoffset.tif")
-rd1 <- raster("./data/seedgrow.tif")
-crs <- proj4string(rtree)
+rlcc <- rast("./data/lcc.tif")
+rtree <- rast("./data/tree.tif")
+rtz <- rast("./data/utcoffset.tif")
+rd1 <- rast("./data/seedgrow.tif")
+crs <- crs(rtree)
 
 ## source functions
 source("functions.R")
@@ -113,8 +113,6 @@ str(x)
 ## $ MAXDUR: num 10
 ## $ MAXDIS: num 1
 ```
-
-NOTE: CRS related warnings are due to [PROJ4 vs PROJ6](https://stackoverflow.com/questions/63727886/proj4-to-proj6-upgrade-and-discarded-datum-warnings) discrepancies when using GDAL > 3 because the `+datum=` part is deprecated.
 
 ### Step 4. Calculate offsets
 

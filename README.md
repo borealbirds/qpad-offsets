@@ -114,8 +114,6 @@ str(x)
 ## $ MAXDIS: num 1
 ```
 
-NOTE: CRS related warnings are due to [PROJ4 vs PROJ6](https://stackoverflow.com/questions/63727886/proj4-to-proj6-upgrade-and-discarded-datum-warnings) discrepancies when using GDAL > 3 because the `+datum=` part is deprecated.
-
 ### Step 4. Calculate offsets
 
 `A` is the known or estimated area of survey, `p` is availability given presence, `q` is detectability given avaibalility.

@@ -63,12 +63,11 @@ make_x <- function(
   xy <- data.frame(x=lon, y=lat)
   xy$x[is.na(xy$x)] <- mean(xy$x, na.rm=TRUE)
   xy$y[is.na(xy$y)] <- mean(xy$y, na.rm=TRUE)
-  coordinates(xy) <- ~ x + y
-  proj4string(xy) <- "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"
-  xy <- spTransform(xy, crs)
+  xy <- vect(xy, geom=c("x", "y"), crs="+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+  xy <- project(xy, crs)
 
   ## LCC4 and LCC2
-  vlcc <- raster::extract(rlcc, xy)
+  vlcc <- extract(rlcc, xy)$lcc
   # 0: No data (NA/NA)
   # 1: Temperate or sub-polar needleleaf forest (Conif/Forest)
   # 2: Sub-polar taiga needleleaf forest (Conif/Forest)
@@ -86,22 +85,22 @@ make_x <- function(
   # 18: Water (NA/NA)
   # 19: Snow and Ice (NA/NA)
   lcclevs <- c("0"="", "1"="Conif", "2"="Conif", "3"="", "4"="",
-    "5"="DecidMixed", "6"="DecidMixed", "7"="", "8"="Open", "9"="",
-    "10"="Open", "11"="Open", "12"="Open", "13"="Open", "14"="Wet",
-    "15"="Open", "16"="Open", "17"="Open", "18"="", "19"="")
+               "5"="DecidMixed", "6"="DecidMixed", "7"="", "8"="Open", "9"="",
+               "10"="Open", "11"="Open", "12"="Open", "13"="Open", "14"="Wet",
+               "15"="Open", "16"="Open", "17"="Open", "18"="", "19"="")
   lcc4 <- factor(lcclevs[vlcc+1], c("DecidMixed", "Conif", "Open", "Wet"))
   lcc2 <- lcc4
   levels(lcc2) <- c("Forest", "Forest", "OpenWet", "OpenWet")
 
   ## TREE
-  vtree <- raster::extract(rtree, xy)
+  vtree <- extract(rtree, xy)$tree
   TREE <- vtree / 100
   TREE[TREE %)(% c(0, 1)] <- 0
 
   ## extract seedgrow value (this is rounded)
-  d1 <- raster::extract(rd1, xy)
+  d1 <- extract(rd1, xy)$seedgrow
   ## UTC offset + 7 makes Alberta 0 (MDT offset)
-  tz <- raster::extract(rtz, xy) + 7
+  tz <- raster::extract(rtz, xy)$utcoffset + 7
 
   ## transform the rest
   JDAY <- round(day / 365, 4) # 0-365
@@ -112,9 +111,9 @@ make_x <- function(
   ## sunrise time adjusted by offset
   ok_dt <- !is.na(dtm)
   dtm[is.na(dtm)] <- mean(dtm, na.rm=TRUE)
-  sr <- sunriset(cbind("X"=lon, "Y"=lat),
-    as.POSIXct(dtm, tz="America/Edmonton"),
-    direction="sunrise", POSIXct.out=FALSE) * 24
+  sr <- suntools::sunriset(cbind("X"=lon, "Y"=lat),
+                           as.POSIXct(dtm, tz="America/Edmonton"),
+                           direction="sunrise", POSIXct.out=FALSE) * 24
   TSSR <- round(unname((hour - sr + tz) / 24), 4)
 
   ## days since local spring

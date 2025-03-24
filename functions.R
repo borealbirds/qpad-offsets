@@ -185,12 +185,12 @@ make_off <- function(spp, x, useMethod="y"){
   ## best model
   if(useMethod=="n"){
     ### no TM method
-    mi <- bestmodelBAMspecies(spp, type="BIC", TM=0)
+    mi <- bestmodelBAMspecies(spp, type="BIC")
     cfi <- coefBAMspecies(spp, mi$sra, mi$edr)
   }
   if(useMethod=="y"){
     ### TM method
-    mi <- bestmodelBAMspecies(spp, type="BIC", TM=1)
+    mi <- bestmodelBAMspecies(spp, type="BIC")
     cfi <- coefBAMspecies(spp, mi$sra, mi$edr)
   }
 

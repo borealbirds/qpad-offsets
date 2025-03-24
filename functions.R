@@ -114,7 +114,7 @@ make_x <- function(
   sr <- suntools::sunriset(cbind("X"=lon, "Y"=lat),
                            as.POSIXct(dtm, tz="America/Edmonton"),
                            direction="sunrise", POSIXct.out=FALSE) * 24
-  TSSR <- round(unname((hour - sr + tz) / 24), 4)
+  TSSR <- round(unname((hour - sr - tz) / 24), 4)
 
   ## days since local spring
   DSLS <- (day - d1) / 365

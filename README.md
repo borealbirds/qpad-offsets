@@ -5,7 +5,7 @@
 This repository contains geospatial layers that are consistent with QPAD v3 estimates.
 
 ## Note
-Please note we discovered and fixed a bug in the code for calculating QPAD offsets in late March 2025 that dated back approximately ten years. The bug was within the code used to adjust time zones and therefore affects QPAD offsets used for
+We discovered and fixed a bug in the code for calculating QPAD offsets in late March 2025 that dated back approximately ten years. The bug was within the code used to adjust time zones and therefore affects QPAD offsets used for
 1. [species with time since sunrise in the top model](https://github.com/borealbirds/QPAD-offsets-correction/blob/main/qpad_tssr_species.csv) *and*
 2. in areas outside the mountain time zone.
    

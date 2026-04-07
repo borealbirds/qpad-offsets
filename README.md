@@ -4,6 +4,17 @@
 
 This repository contains geospatial layers that are consistent with QPAD v3 estimates.
 
+## Note
+We discovered and fixed a bug in the code for calculating QPAD offsets in late March 2025 that dated back approximately ten years. The bug was within the code used to adjust time zones and therefore affects QPAD offsets used for
+1. [species with time since sunrise in the top model](https://github.com/borealbirds/QPAD-offsets-correction/blob/main/qpad_tssr_species.csv) *and*
+2. in areas outside the mountain time zone.
+   
+Since QPAD offsets only adjust the intercept of model estimates, this bug will only affect model outcomes if
+1. models were built for density or population estimates per se, or
+1. models were compared or integrated across time zones. Relative patterns of density (e.g., habitat coefficients) within time zones should be unaffected.
+
+If you have been affected by this bug, please see the [BAM QPAD correction repository](https://github.com/borealbirds/QPAD-offsets-correction) for further details or email bamp@ualberta.ca for assistance.
+
 ## Installation
 
 Install R then get the R dependencies:

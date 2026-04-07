@@ -51,7 +51,7 @@ make_x <- function(
   checkfun(day, "day", c(0, 360))
   checkfun(hour, "hour", c(0, 24))
   checkfun(dur, "dur", c(0, Inf))
-  checkfun(dis, "dis", c(0, Inf))
+ # checkfun(dis, "dis", c(0, Inf))
   if (any(is.infinite(lon)))
     stop("Parameter lon must be finite")
   if (any(is.infinite(lat)))
